@@ -1,4 +1,3 @@
-# Production Dockerfile for Whisper.cpp Go Server
 FROM golang:1.21-bullseye AS builder
 
 # Install build dependencies
