@@ -1,0 +1,320 @@
+{
+	"info": {
+		"_postman_id": "whisper-cpp-server",
+		"name": "Whisper.cpp Server API",
+		"description": "Audio transcription API using whisper.cpp with Go bindings",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "whisper-cpp-server"
+	},
+	"item": [
+		{
+			"name": "Server Info",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						""
+					]
+				},
+				"description": "Get server information including model details and available endpoints"
+			},
+			"response": [
+				{
+					"name": "Success",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								""
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"service\": \"Whisper.cpp Server\",\n  \"version\": \"1.0.0\",\n  \"model\": \"base.en\",\n  \"languages\": [\"en\"],\n  \"endpoints\": {\n    \"transcribe\": \"/transcribe\",\n    \"health\": \"/health\"\n  }\n}"
+				}
+			]
+		},
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/health",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"health"
+					]
+				},
+				"description": "Check server health status. Returns 200 if model is loaded and ready, 503 if unhealthy."
+			},
+			"response": [
+				{
+					"name": "Healthy",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"status\": \"healthy\",\n  \"model\": \"base.en\"\n}"
+				},
+				{
+					"name": "Unhealthy",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"status": "Service Unavailable",
+					"code": 503,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"status\": \"unhealthy\",\n  \"model\": \"base.en\"\n}"
+				}
+			]
+		},
+		{
+			"name": "Transcribe Audio",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": [],
+							"description": "Audio file to transcribe (WAV format)"
+						},
+						{
+							"key": "language",
+							"value": "auto",
+							"description": "Language code (auto for auto-detection)",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseUrl}}/transcribe",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"transcribe"
+					]
+				},
+				"description": "Transcribe an audio file. Supports WAV format only."
+			},
+			"response": [
+				{
+					"name": "Success",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "audio.wav"
+								},
+								{
+									"key": "language",
+									"value": "auto",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/transcribe",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"transcribe"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"success\": true,\n  \"transcription\": \"And so, my fellow Americans, ask not what your country can do for you, ask what you can do for your country.\",\n  \"segments\": [\n    {\n      \"start\": 0.0,\n      \"end\": 11.0,\n      \"text\": \"And so, my fellow Americans, ask not what your country can do for you, ask what you can do for your country.\"\n    }\n  ],\n  \"language\": \"en\",\n  \"model\": \"base.en\",\n  \"duration\": 11.0\n}"
+				},
+				{
+					"name": "No File",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{baseUrl}}/transcribe",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"transcribe"
+							]
+						}
+					},
+					"status": "Bad Request",
+					"code": 400,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"success\": false,\n  \"error\": \"No file provided\"\n}"
+				},
+				{
+					"name": "Invalid File Type",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "audio.mp3"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/transcribe",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"transcribe"
+							]
+						}
+					},
+					"status": "Bad Request",
+					"code": 400,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"success\": false,\n  \"error\": \"Invalid file type. Only WAV files are supported\"\n}"
+				},
+				{
+					"name": "File Too Large",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "large_audio.wav"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/transcribe",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"transcribe"
+							]
+						}
+					},
+					"status": "Request Entity Too Large",
+					"code": 413,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"success\": false,\n  \"error\": \"File too large\"\n}"
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}

@@ -1,0 +1,44 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation
+README.md
+*.md
+
+# Build artifacts
+whisper-server
+build_go/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files
+test/
+tests/
+
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go
+go.work
+go.work.sum
+
+# GitHub Actions
+.github/
