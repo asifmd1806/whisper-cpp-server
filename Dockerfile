@@ -41,10 +41,6 @@ RUN CGO_ENABLED=1 \
 
 FROM builder-${TARGETARCH} AS final-builder
 
-# Download models
-RUN cd whisper.cpp && \
-    ./models/download-ggml-model.sh base.en && \
-    ./models/download-ggml-model.sh base
 
 # Runtime stage with platform-specific dependencies
 FROM alpine:3.18 AS runtime-amd64
@@ -63,13 +59,19 @@ RUN adduser -D -u 1000 whisper
 # Copy server binary
 COPY --from=final-builder /workspace/whisper-server /app/whisper-server
 
-# Copy models and samples
-COPY --from=final-builder /workspace/whisper.cpp/models/ /app/whisper.cpp/models/
+# Copy download script for runtime model downloading
+COPY --from=final-builder /workspace/whisper.cpp/models/download-ggml-model.sh /app/whisper.cpp/models/download-ggml-model.sh
 COPY --from=final-builder /workspace/whisper.cpp/samples/ /app/whisper.cpp/samples/
 
-# Set permissions
-RUN chown -R whisper:whisper /app && \
-    chmod +x /app/whisper-server
+# Copy entrypoint script
+COPY entrypoint.sh /app/entrypoint.sh
+
+# Create models directory and set permissions
+RUN mkdir -p /app/whisper.cpp/models && \
+    chown -R whisper:whisper /app && \
+    chmod +x /app/whisper-server && \
+    chmod +x /app/whisper.cpp/models/download-ggml-model.sh && \
+    chmod +x /app/entrypoint.sh
 
 # Switch to non-root user
 USER whisper
@@ -82,9 +84,9 @@ ENV WHISPER_MODEL=base.en \
 # Expose port
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+# Health check - allow more time for model download during startup
+HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
-# Run server
-CMD ["./whisper-server"]
+# Run server via entrypoint script
+CMD ["./entrypoint.sh"]
