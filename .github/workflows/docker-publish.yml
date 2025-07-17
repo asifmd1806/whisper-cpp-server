@@ -35,17 +35,31 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Log in to Docker Hub
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        username: ${{ github.actor }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
     - name: Extract metadata
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        images: |
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          asif18061996/whisper-cpp-server
         tags: |
           type=ref,event=branch
           type=ref,event=pr
           type=semver,pattern={{version}}
           type=semver,pattern={{major}}.{{minor}}
           type=raw,value=latest,enable={{is_default_branch}}
+        labels: |
+          org.opencontainers.image.title=Whisper CPP Server
+          org.opencontainers.image.description=High-performance HTTP server for OpenAI Whisper speech-to-text transcription using whisper.cpp
+          org.opencontainers.image.vendor=asif18061996
+          org.opencontainers.image.category=ai,speech-recognition,transcription
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
