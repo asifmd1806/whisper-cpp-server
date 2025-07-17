@@ -37,7 +37,7 @@ FROM builder AS builder-arm64
 RUN CGO_ENABLED=1 \
     C_INCLUDE_PATH="/workspace/whisper.cpp/include:/workspace/whisper.cpp/ggml/include" \
     LIBRARY_PATH="/workspace/whisper.cpp/build_go/src:/workspace/whisper.cpp/build_go/ggml/src:/workspace/whisper.cpp/build_go/ggml/src/ggml-metal:/workspace/whisper.cpp/build_go/ggml/src/ggml-cpu:/workspace/whisper.cpp/build_go/ggml/src/ggml-blas" \
-    go build -ldflags="-s -w" -o whisper-server .
+    go build -ldflags="-s -w -linkmode external -extldflags '-static'" -a -installsuffix cgo -o whisper-server .
 
 FROM builder-${TARGETARCH} AS final-builder
 
