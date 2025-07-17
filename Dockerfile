@@ -26,22 +26,34 @@ COPY main.go ./
 # Download Go dependencies
 RUN go mod tidy && go mod download
 
-# Build server with absolute paths
+# Platform-specific build stage
+FROM builder AS builder-amd64
 RUN CGO_ENABLED=1 \
     C_INCLUDE_PATH="/workspace/whisper.cpp/include:/workspace/whisper.cpp/ggml/include" \
     LIBRARY_PATH="/workspace/whisper.cpp/build_go/src:/workspace/whisper.cpp/build_go/ggml/src:/workspace/whisper.cpp/build_go/ggml/src/ggml-metal:/workspace/whisper.cpp/build_go/ggml/src/ggml-cpu:/workspace/whisper.cpp/build_go/ggml/src/ggml-blas" \
     go build -ldflags="-s -w -linkmode external -extldflags '-static'" -a -installsuffix cgo -o whisper-server .
+
+FROM builder AS builder-arm64
+RUN CGO_ENABLED=1 \
+    C_INCLUDE_PATH="/workspace/whisper.cpp/include:/workspace/whisper.cpp/ggml/include" \
+    LIBRARY_PATH="/workspace/whisper.cpp/build_go/src:/workspace/whisper.cpp/build_go/ggml/src:/workspace/whisper.cpp/build_go/ggml/src/ggml-metal:/workspace/whisper.cpp/build_go/ggml/src/ggml-cpu:/workspace/whisper.cpp/build_go/ggml/src/ggml-blas" \
+    go build -ldflags="-s -w" -o whisper-server .
+
+FROM builder-${TARGETARCH} AS final-builder
 
 # Download models
 RUN cd whisper.cpp && \
     ./models/download-ggml-model.sh base.en && \
     ./models/download-ggml-model.sh base
 
-# Runtime stage
-FROM alpine:3.18
-
-# Install runtime dependencies
+# Runtime stage with platform-specific dependencies
+FROM alpine:3.18 AS runtime-amd64
 RUN apk add --no-cache curl ca-certificates tzdata
+
+FROM alpine:3.18 AS runtime-arm64
+RUN apk add --no-cache curl ca-certificates tzdata libc6-compat libstdc++
+
+FROM runtime-${TARGETARCH} AS runtime
 
 WORKDIR /app
 
@@ -49,11 +61,11 @@ WORKDIR /app
 RUN adduser -D -u 1000 whisper
 
 # Copy server binary
-COPY --from=builder /workspace/whisper-server /app/whisper-server
+COPY --from=final-builder /workspace/whisper-server /app/whisper-server
 
 # Copy models and samples
-COPY --from=builder /workspace/whisper.cpp/models/ /app/whisper.cpp/models/
-COPY --from=builder /workspace/whisper.cpp/samples/ /app/whisper.cpp/samples/
+COPY --from=final-builder /workspace/whisper.cpp/models/ /app/whisper.cpp/models/
+COPY --from=final-builder /workspace/whisper.cpp/samples/ /app/whisper.cpp/samples/
 
 # Set permissions
 RUN chown -R whisper:whisper /app && \
