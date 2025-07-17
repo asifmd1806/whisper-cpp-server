@@ -1,4 +1,4 @@
-FROM golang:1.21-bullseye AS builder
+FROM golang:1.23-bullseye AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
@@ -18,18 +18,18 @@ COPY go.mod go.sum ./
 COPY whisper.cpp/ ./whisper.cpp/
 
 # Build whisper.cpp with Go bindings
-RUN cd whisper.cpp/bindings/go && make whisper
+RUN cd whisper.cpp && rm -rf build_go && cd bindings/go && make whisper
 
 # Copy source code
 COPY main.go ./
 
 # Download Go dependencies
-RUN go mod download
+RUN go mod tidy && go mod download
 
-# Build server
+# Build server with absolute paths
 RUN CGO_ENABLED=1 \
-    C_INCLUDE_PATH="./whisper.cpp/include:./whisper.cpp/ggml/include" \
-    LIBRARY_PATH="./whisper.cpp/build_go/src:./whisper.cpp/build_go/ggml/src:./whisper.cpp/build_go/ggml/src/ggml-metal:./whisper.cpp/build_go/ggml/src/ggml-cpu:./whisper.cpp/build_go/ggml/src/ggml-blas" \
+    C_INCLUDE_PATH="/workspace/whisper.cpp/include:/workspace/whisper.cpp/ggml/include" \
+    LIBRARY_PATH="/workspace/whisper.cpp/build_go/src:/workspace/whisper.cpp/build_go/ggml/src:/workspace/whisper.cpp/build_go/ggml/src/ggml-metal:/workspace/whisper.cpp/build_go/ggml/src/ggml-cpu:/workspace/whisper.cpp/build_go/ggml/src/ggml-blas" \
     go build -ldflags="-s -w -linkmode external -extldflags '-static'" -a -installsuffix cgo -o whisper-server .
 
 # Download models
